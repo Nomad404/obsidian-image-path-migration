@@ -14,19 +14,21 @@ const DEFAULT_SETTINGS: ImagePathPluginSettings = {
 	type: MigrationType.Local
 }
 
+// eslint-disable-next-line no-useless-escape
+const OBSIDIAN_IMAGE_REGEX = /^!\[\[([^(?!\/|\\|:|\*|\?|"|<|>|\|)]+)\.([^(?!\/|\\|:|\*|\?|"|<|>|\|\.)]+)\]\]$/;
+
 export default class ImagePathPlugin extends Plugin {
 	settings: ImagePathPluginSettings;
 
 	async onload() {
 		await this.loadSettings();
 
-		const changePathsRibbon = this.addRibbonIcon('image', "Migrate Paths", (evt: MouseEvent) => {
+		this.addRibbonIcon('image', "Migrate Paths", (evt: MouseEvent) => {
 			this.migratePaths();
 		});
 
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status Bar Text');
+		const imageCounterStatus = this.addStatusBarItem();
+		imageCounterStatus.setText("Images: " + await this.getImageCount())
 
 		this.addCommand({
 			id: 'migrate-image-paths',
@@ -35,16 +37,7 @@ export default class ImagePathPlugin extends Plugin {
 		});
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
-
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			console.log('click', evt);
-		});
-
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
+		this.addSettingTab(new ImageMigrationSettingTab(this.app, this));
 	}
 
 	onunload() {
@@ -60,11 +53,37 @@ export default class ImagePathPlugin extends Plugin {
 	}
 
 	async migratePaths() {
-		new Notice("Migrate Paths");
+		// new Notice("Migrate Paths");
+		this.getAllImagesInFile();
+	}
+
+	async getAllImagesInFile() {
+		const currentFile = this.app.workspace.getActiveFile();
+		if (currentFile == null) {
+			return;
+		}
+		// const fileContent: string = await this.app.vault.read(currentFile);
+
+
+	}
+
+	async getImageCount(): Promise<number> {
+		const currentFile = this.app.workspace.getActiveFile();
+		if (currentFile == null) {
+			return 0;
+		}
+		const fileContent: string = await this.app.vault.read(currentFile);
+
+		const images: RegExpExecArray | null = OBSIDIAN_IMAGE_REGEX.exec(fileContent);
+		console.log(images);
+		if (!images) {
+			return 0;
+		}
+		return images.length;
 	}
 }
 
-class SampleSettingTab extends PluginSettingTab {
+class ImageMigrationSettingTab extends PluginSettingTab {
 	plugin: ImagePathPlugin;
 
 	constructor(app: App, plugin: ImagePathPlugin) {
