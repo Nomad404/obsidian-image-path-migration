@@ -1,0 +1,11 @@
+{
+	"id": "image-local-path-migration",
+	"name": "Image local path migration",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "Changes the reference of an image into a local path reference.",
+	"author": "Max Kruse",
+	"authorUrl": "https://obsidian.md",
+	"fundingUrl": "https://obsidian.md/pricing",
+	"isDesktopOnly": false
+}
