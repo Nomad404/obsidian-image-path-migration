@@ -15,7 +15,7 @@ const DEFAULT_SETTINGS: ImagePathPluginSettings = {
 }
 
 // eslint-disable-next-line no-useless-escape
-const OBSIDIAN_IMAGE_REGEX = /^!\[\[([^(?!\/|\\|:|\*|\?|"|<|>|\|)]+)\.([^(?!\/|\\|:|\*|\?|"|<|>|\|\.)]+)\]\]$/;
+const OBSIDIAN_IMAGE_REGEX = /!\[\[([^(?!\/|\\|:|\*|\?|"|<|>|\|)]+)\.([^(?!\/|\\|:|\*|\?|"|<|>|\|\.)]+)\]\]/;
 
 export default class ImagePathPlugin extends Plugin {
 	settings: ImagePathPluginSettings;
@@ -75,7 +75,6 @@ export default class ImagePathPlugin extends Plugin {
 		const fileContent: string = await this.app.vault.read(currentFile);
 
 		const images: RegExpExecArray | null = OBSIDIAN_IMAGE_REGEX.exec(fileContent);
-		console.log(images);
 		if (!images) {
 			return 0;
 		}
