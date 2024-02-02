@@ -6,38 +6,38 @@ enum MigrationType {
 	Local = "Local",
 }
 
-interface ImagePathPluginSettings {
+interface PathMigrationPluginSettings {
 	type: MigrationType;
 }
 
-const DEFAULT_SETTINGS: ImagePathPluginSettings = {
+const DEFAULT_SETTINGS: PathMigrationPluginSettings = {
 	type: MigrationType.Local
 }
 
 // eslint-disable-next-line no-useless-escape
-const OBSIDIAN_IMAGE_REGEX = /!\[\[([^(?!\/|\\|:|\*|\?|"|<|>|\|)]+)\.([^(?!\/|\\|:|\*|\?|"|<|>|\|\.)]+)\]\]/;
+const OBSIDIAN_FILE_NAME_REGEX = /!\[\[([^(?!\/|\\|:|\*|\?|"|<|>|\|)]+)\.([^(?!\/|\\|:|\*|\?|"|<|>|\|\.)]+)\]\]/;
 
-export default class ImagePathPlugin extends Plugin {
-	settings: ImagePathPluginSettings;
+export default class PathMigrationPlugin extends Plugin {
+	settings: PathMigrationPluginSettings;
 
 	async onload() {
 		await this.loadSettings();
 
-		this.addRibbonIcon('image', "Migrate Paths", (evt: MouseEvent) => {
+		this.addRibbonIcon('route', "Migrate Paths", (evt: MouseEvent) => {
 			this.migratePaths();
 		});
 
 		const imageCounterStatus = this.addStatusBarItem();
-		imageCounterStatus.setText("Images: " + await this.getImageCount())
+		imageCounterStatus.setText("File links: " + await this.getFileLinkCount())
 
 		this.addCommand({
-			id: 'migrate-image-paths',
-			name: 'Migrate image paths',
+			id: 'migrate-file-paths',
+			name: 'Migrate file paths',
 			callback: () => this.migratePaths(),
 		});
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new ImageMigrationSettingTab(this.app, this));
+		this.addSettingTab(new PathMigrationSettingTab(this.app, this));
 	}
 
 	onunload() {
@@ -54,38 +54,49 @@ export default class ImagePathPlugin extends Plugin {
 
 	async migratePaths() {
 		// new Notice("Migrate Paths");
-		this.getAllImagesInFile();
-	}
 
-	async getAllImagesInFile() {
 		const currentFile = this.app.workspace.getActiveFile();
-		if (currentFile == null) {
+		if (!currentFile) {
+			new Notice("No file currently open for migration");
 			return;
 		}
-		// const fileContent: string = await this.app.vault.read(currentFile);
 
+		const fileContent: string = await this.app.vault.read(currentFile);
 
+		const fileNames: RegExpExecArray | null = OBSIDIAN_FILE_NAME_REGEX.exec(fileContent);
+		if (!fileNames) {
+			new Notice("No file links found in document.");
+			return;
+		}
+
+		const allFiles = this.app.vault.getFiles();
+		const filesDict = Object.fromEntries(allFiles.map(f => [`![[${f.name}]]`, f]));
+		fileNames.forEach(function (fileName) {
+			if (filesDict[fileName]) {
+				console.log(fileName);
+			}
+		});
 	}
 
-	async getImageCount(): Promise<number> {
+	async getFileLinkCount(): Promise<number> {
 		const currentFile = this.app.workspace.getActiveFile();
 		if (currentFile == null) {
 			return 0;
 		}
 		const fileContent: string = await this.app.vault.read(currentFile);
 
-		const images: RegExpExecArray | null = OBSIDIAN_IMAGE_REGEX.exec(fileContent);
-		if (!images) {
+		const fileNames: RegExpExecArray | null = OBSIDIAN_FILE_NAME_REGEX.exec(fileContent);
+		if (!fileNames) {
 			return 0;
 		}
-		return images.length;
+		return fileNames.length;
 	}
 }
 
-class ImageMigrationSettingTab extends PluginSettingTab {
-	plugin: ImagePathPlugin;
+class PathMigrationSettingTab extends PluginSettingTab {
+	plugin: PathMigrationPlugin;
 
-	constructor(app: App, plugin: ImagePathPlugin) {
+	constructor(app: App, plugin: PathMigrationPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
