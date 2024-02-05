@@ -15,7 +15,7 @@ const DEFAULT_SETTINGS: PathMigrationPluginSettings = {
 }
 
 // eslint-disable-next-line no-useless-escape
-const OBSIDIAN_FILE_NAME_REGEX = /!\[\[([^(?!\/|\\|:|\*|\?|"|<|>|\|)]+)\.([^(?!\/|\\|:|\*|\?|"|<|>|\|\.)]+)\]\]/;
+const OBSIDIAN_FILE_NAME_REGEX = /!\[\[([^(?!\/|\\|:|\*|\?|"|<|>|\|)]+)\.([^(?!\/|\\|:|\*|\?|"|<|>|\|\.)]+)\]\]/gi;
 
 export default class PathMigrationPlugin extends Plugin {
 	settings: PathMigrationPluginSettings;
@@ -28,7 +28,7 @@ export default class PathMigrationPlugin extends Plugin {
 		});
 
 		const imageCounterStatus = this.addStatusBarItem();
-		imageCounterStatus.setText("File links: " + await this.getFileLinkCount())
+		imageCounterStatus.setText(`File links: ${await this.getFileLinkCount()}`)
 
 		this.addCommand({
 			id: 'migrate-file-paths',
@@ -68,14 +68,15 @@ export default class PathMigrationPlugin extends Plugin {
 			new Notice("No file links found in document.");
 			return;
 		}
+		console.log(fileNames);
 
-		const allFiles = this.app.vault.getFiles();
-		const filesDict = Object.fromEntries(allFiles.map(f => [`![[${f.name}]]`, f]));
-		fileNames.forEach(function (fileName) {
-			if (filesDict[fileName]) {
-				console.log(fileName);
-			}
-		});
+		// const allFiles = this.app.vault.getFiles();
+		// const filesDict = Object.fromEntries(allFiles.map(f => [`![[${f.name}]]`, f]));
+		// fileNames.forEach(function (fileName) {
+		// 	if (filesDict[fileName]) {
+		// 		console.log(fileName);
+		// 	}
+		// });
 	}
 
 	async getFileLinkCount(): Promise<number> {
